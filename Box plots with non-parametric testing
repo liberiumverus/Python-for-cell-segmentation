@@ -3,38 +3,36 @@ import matplotlib as mpl
 import numpy as np
 import os
 
-# ===================== STYLE =====================
+# =========================================================
+# 🎨 GLOBAL STYLE SETTINGS (Publication-ready)
+# =========================================================
 mpl.rcParams.update({
     "font.family": "Times New Roman",
     "axes.unicode_minus": False,
     "figure.facecolor": "white",
     "axes.facecolor": "white",
     "savefig.facecolor": "white",
-    "pdf.fonttype": 42,
+    "pdf.fonttype": 42,   # Editable text in Illustrator
     "ps.fonttype": 42
 })
 
+# Reproducibility for jittered scatter
 np.random.seed(42)
 
-# ===================== DATA =====================
+# =========================================================
+# 📊 DATA STRUCTURE
+# Each genotype contains 6 parameters (one list per parameter)
+# Replace empty lists with your actual data
+# =========================================================
 data = {
-    "WT": [
-        [], [], [], [], [], []
-    ],
-    "DAAM RNAi": [
-        [], [], [], [], [], []
-    ],
-    "Rac1 RNAi": [
-        [], [], [], [], [], []
-    ],
-    "Rho1GAP19D RNAi": [
-        [], [], [], [], [], []
-    ],
-    "Rok RNAi": [
-        [], [], [], [], [], []
-    ]
+    "WT":                [[], [], [], [], [], []],
+    "DAAM RNAi":         [[], [], [], [], [], []],
+    "Rac1 RNAi":         [[], [], [], [], [], []],
+    "Rho1GAP19D RNAi":   [[], [], [], [], [], []],
+    "Rok RNAi":          [[], [], [], [], [], []]
 }
 
+# Parameter labels (order must match data indexing)
 params = [
     "Total wing area (mm²)",
     "Perimeter (mm)",
@@ -44,101 +42,107 @@ params = [
     "Roundness"
 ]
 
+# Extract group names
 groups = list(data.keys())
 
-# ===================== PRE-CALCULATED MANN WHITNEY P VALUES =====================
+# =========================================================
+# 📈 PRE-CALCULATED MANN-WHITNEY P-VALUES
+# Format: {parameter: {genotype_vs_WT: p-value}}
+# =========================================================
 mw_pvals = {
-    "Total wing area (mm²)": {
-        "DAAM RNAi": [],
-        "Rac1 RNAi": [],
-        "Rho1GAP19D RNAi": [],
-        "Rok RNAi": []
-    },
-    "Perimeter (mm)": {
-        "DAAM RNAi": [],
-        "Rac1 RNAi": [],
-        "Rho1GAP19D RNAi": [],
-        "Rok RNAi": []
-    },
-    "Perimeter/Area": {
-        "DAAM RNAi": [],
-        "Rac1 RNAi": [],
-        "Rho1GAP19D RNAi": [],
-        "Rok RNAi": []
-    },
-    "Aspect Ratio": {
-        "DAAM RNAi": [],
-        "Rac1 RNAi": [],
-        "Rho1GAP19D RNAi": [],
-        "Rok RNAi": []
-    },
-    "Circularity": {
-        "DAAM RNAi": [],
-        "Rac1 RNAi": [],
-        "Rho1GAP19D RNAi": [],
-        "Rok RNAi": []
-    },
-    "Roundness": {
-        "DAAM RNAi": [],
-        "Rac1 RNAi": [],
-        "Rho1GAP19D RNAi": [],
-        "Rok RNAi": []
+    p: {
+        "DAAM RNAi": None,
+        "Rac1 RNAi": None,
+        "Rho1GAP19D RNAi": None,
+        "Rok RNAi": None
     }
+    for p in params
 }
 
+# =========================================================
+# ⭐ SIGNIFICANCE STAR FUNCTION
+# =========================================================
 def stars(p):
-    if p < 0.001: return "***"
-    if p < 0.01: return "**"
-    if p < 0.05: return "*"
-    return "ns"
+    """Convert p-value to significance stars."""
+    if p is None:
+        return ""
+    if p < 0.001:
+        return "***"
+    elif p < 0.01:
+        return "**"
+    elif p < 0.05:
+        return "*"
+    else:
+        return "ns"
 
-# ===================== PLOT =====================
+# =========================================================
+# 📉 PLOTTING
+# =========================================================
 fig, axes = plt.subplots(2, 3, figsize=(13, 9))
 axes = axes.flatten()
 
-for i, p in enumerate(params):
+for i, param in enumerate(params):
     ax = axes[i]
 
+    # Extract data for current parameter across groups
     plot_data = [data[g][i] for g in groups]
 
-    # boxplot
+    # -------------------------
+    # 📦 Boxplot
+    # -------------------------
     bp = ax.boxplot(plot_data, showfliers=False)
 
-    for k in bp:
-        plt.setp(bp[k], color="black", linewidth=1.2)
+    # Style all boxplot elements
+    for element in bp:
+        plt.setp(bp[element], color="black", linewidth=1.2)
 
-    # individual points
+    # -------------------------
+    # ⚫ Individual data points (jittered)
+    # -------------------------
     for j, vals in enumerate(plot_data):
-        x = np.random.normal(j + 1, 0.06, len(vals))
-        ax.scatter(x, vals, s=15, color="black", alpha=0.7)
+        x_jitter = np.random.normal(j + 1, 0.06, len(vals))
+        ax.scatter(x_jitter, vals, s=15, color="black", alpha=0.7)
 
+    # -------------------------
+    # 🏷️ Axis labels & title
+    # -------------------------
     formatted_labels = [g.replace(" RNAi", "\nRNAi") for g in groups]
     ax.set_xticklabels(formatted_labels)
-    ax.set_title(p)
+    ax.set_title(param)
 
-    # y limits
-    all_vals = np.concatenate(plot_data)
+    # -------------------------
+    # 📏 Dynamic Y-axis scaling
+    # -------------------------
+    all_vals = np.concatenate(plot_data) if any(len(v) > 0 for v in plot_data) else np.array([0])
     ymin, ymax = np.min(all_vals), np.max(all_vals)
-    rng = ymax - ymin
+    rng = ymax - ymin if ymax > ymin else 1  # prevent zero range
+
     ax.set_ylim(ymin - 0.35 * rng, ymax + 0.6 * rng)
 
-    # ===================== USE PRE-CALCULATED MANN WHITNEY VALUES =====================
-    h = ymax + 0.05 * rng
-    step = 0.12 * rng
+    # -------------------------
+    # 📊 Significance annotations (vs WT)
+    # -------------------------
+    h = ymax + 0.05 * rng      # starting height
+    step = 0.12 * rng          # vertical spacing between comparisons
 
-    for j, g in enumerate(groups):
-        if g == "WT":
+    for j, group in enumerate(groups):
+        if group == "WT":
             continue
 
-        pval = mw_pvals[p][g]
+        pval = mw_pvals[param][group]
         star = stars(pval)
 
+        if pval is None:
+            continue  # skip if no p-value provided
+
+        # Draw bracket
         ax.plot(
             [1, 1, j + 1, j + 1],
             [h, h + 0.02 * rng, h + 0.02 * rng, h],
             color="black"
         )
 
+        # Add significance stars
         ax.text(
             (1 + j + 1) / 2,
             h + 0.03 * rng,
@@ -146,17 +150,21 @@ for i, p in enumerate(params):
             ha="center"
         )
 
-        h += step
+        h += step  # move up for next comparison
 
+# Adjust layout
 plt.tight_layout()
 
-out = os.path.join(
+# =========================================================
+# 💾 SAVE OUTPUT
+# =========================================================
+output_path = os.path.join(
     os.path.expanduser("~"),
     "Desktop",
     "BOXPLOT_FINAL_MW_FIXED.png"
 )
 
-plt.savefig(out, dpi=600, bbox_inches="tight")
+plt.savefig(output_path, dpi=600, bbox_inches="tight")
 plt.show()
 
-print("Saved:", out)
+print("Saved:", output_path)
