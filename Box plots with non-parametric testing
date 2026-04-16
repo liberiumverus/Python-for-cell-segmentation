@@ -1,0 +1,162 @@
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+import numpy as np
+import os
+
+# ===================== STYLE =====================
+mpl.rcParams.update({
+    "font.family": "Times New Roman",
+    "axes.unicode_minus": False,
+    "figure.facecolor": "white",
+    "axes.facecolor": "white",
+    "savefig.facecolor": "white",
+    "pdf.fonttype": 42,
+    "ps.fonttype": 42
+})
+
+np.random.seed(42)
+
+# ===================== DATA =====================
+data = {
+    "WT": [
+        [], [], [], [], [], []
+    ],
+    "DAAM RNAi": [
+        [], [], [], [], [], []
+    ],
+    "Rac1 RNAi": [
+        [], [], [], [], [], []
+    ],
+    "Rho1GAP19D RNAi": [
+        [], [], [], [], [], []
+    ],
+    "Rok RNAi": [
+        [], [], [], [], [], []
+    ]
+}
+
+params = [
+    "Total wing area (mm²)",
+    "Perimeter (mm)",
+    "Perimeter/Area",
+    "Aspect Ratio",
+    "Circularity",
+    "Roundness"
+]
+
+groups = list(data.keys())
+
+# ===================== PRE-CALCULATED MANN WHITNEY P VALUES =====================
+mw_pvals = {
+    "Total wing area (mm²)": {
+        "DAAM RNAi": [],
+        "Rac1 RNAi": [],
+        "Rho1GAP19D RNAi": [],
+        "Rok RNAi": []
+    },
+    "Perimeter (mm)": {
+        "DAAM RNAi": [],
+        "Rac1 RNAi": [],
+        "Rho1GAP19D RNAi": [],
+        "Rok RNAi": []
+    },
+    "Perimeter/Area": {
+        "DAAM RNAi": [],
+        "Rac1 RNAi": [],
+        "Rho1GAP19D RNAi": [],
+        "Rok RNAi": []
+    },
+    "Aspect Ratio": {
+        "DAAM RNAi": [],
+        "Rac1 RNAi": [],
+        "Rho1GAP19D RNAi": [],
+        "Rok RNAi": []
+    },
+    "Circularity": {
+        "DAAM RNAi": [],
+        "Rac1 RNAi": [],
+        "Rho1GAP19D RNAi": [],
+        "Rok RNAi": []
+    },
+    "Roundness": {
+        "DAAM RNAi": [],
+        "Rac1 RNAi": [],
+        "Rho1GAP19D RNAi": [],
+        "Rok RNAi": []
+    }
+}
+
+def stars(p):
+    if p < 0.001: return "***"
+    if p < 0.01: return "**"
+    if p < 0.05: return "*"
+    return "ns"
+
+# ===================== PLOT =====================
+fig, axes = plt.subplots(2, 3, figsize=(13, 9))
+axes = axes.flatten()
+
+for i, p in enumerate(params):
+    ax = axes[i]
+
+    plot_data = [data[g][i] for g in groups]
+
+    # boxplot
+    bp = ax.boxplot(plot_data, showfliers=False)
+
+    for k in bp:
+        plt.setp(bp[k], color="black", linewidth=1.2)
+
+    # individual points
+    for j, vals in enumerate(plot_data):
+        x = np.random.normal(j + 1, 0.06, len(vals))
+        ax.scatter(x, vals, s=15, color="black", alpha=0.7)
+
+    formatted_labels = [g.replace(" RNAi", "\nRNAi") for g in groups]
+    ax.set_xticklabels(formatted_labels)
+    ax.set_title(p)
+
+    # y limits
+    all_vals = np.concatenate(plot_data)
+    ymin, ymax = np.min(all_vals), np.max(all_vals)
+    rng = ymax - ymin
+    ax.set_ylim(ymin - 0.35 * rng, ymax + 0.6 * rng)
+
+    # ===================== USE PRE-CALCULATED MANN WHITNEY VALUES =====================
+    h = ymax + 0.05 * rng
+    step = 0.12 * rng
+
+    for j, g in enumerate(groups):
+        if g == "WT":
+            continue
+
+        pval = mw_pvals[p][g]
+        star = stars(pval)
+
+        ax.plot(
+            [1, 1, j + 1, j + 1],
+            [h, h + 0.02 * rng, h + 0.02 * rng, h],
+            color="black"
+        )
+
+        ax.text(
+            (1 + j + 1) / 2,
+            h + 0.03 * rng,
+            star,
+            ha="center"
+        )
+
+        h += step
+
+plt.tight_layout()
+
+out = os.path.join(
+    os.path.expanduser("~"),
+    "Desktop",
+    "BOXPLOT_FINAL_MW_FIXED.png"
+)
+
+plt.savefig(out, dpi=600, bbox_inches="tight")
+plt.show()
+
+print("Saved:", out)
