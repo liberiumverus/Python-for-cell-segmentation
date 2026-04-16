@@ -1,15 +1,88 @@
-# Python-for-cell-segmentation
-Just a frustrated Uni student who can't get a software to work so he created a Python code to brute force his way through his FYP. This code creates spatial plots, histograms and their respective csv for easy data analysis of histogram data, and exports it as a file output. This works in tandem with FIJI ImageJ Tissue Analyzer. Best used for cell segmenting of Drosophila wings, wing disc and pouch.
+A custom Python analysis pipeline developed during my final year project to overcome limitations in existing image analysis tools. Designed to work alongside FIJI ImageJ Tissue Analyzer, this workflow streamlines quantitative analysis of segmented cellular data.
 
 
-Also includes box plots and bar charts with significance plots. Both uses pre-calculated std and p-values for Mann-Whitney U as I coudn't find out whats wrong with the plot. 
+Overview
+
+This project focuses on analysing segmented cells from Drosophila wing, wing disc, and pouch datasets.
+
+The scripts automate:
+
+- Spatial visualisation of cells
+- Histogram generation for key cellular metrics
+- Export of structured CSV tables for downstream analysis
+
+All outputs are generated directly from .db files produced by Tissue Analyzer.
+
+Features
+1. Single-Sample Analysis
+Spatial plots of cell positions
+Histograms of:
+- Cell area
+- Perimeter
+- Orientation
+- Elongation (S1)
+- Neighbour distribution analysis
+- Cell density heatmaps
+Automatic CSV export of histogram binning
+
+Output location:
+→ Same directory as the input .db file
+
+2. Multi-Group Comparison
+Box plots with jittered data points
+Bar charts with error bars (± standard deviation)
+Significance annotations (Mann–Whitney U test, pre-calculated)
+
+Parameters analysed:
+
+- Total wing area
+- Perimeter
+- Perimeter / Area
+- Aspect Ratio
+- Circularity
+- Roundness
+
+Output location:
+→ Desktop (as compiled figures)
 
 
-Single sample plots and histograms will be exported to the same directory as the database that was used
+Usage
+Input Requirements
+.db file generated from FIJI ImageJ Tissue Analyzer
+Data must contain:
+- Cell coordinates
+- Shape descriptors
+- Neighbour information
 
 
-Overlay plots and pooled cell histograms will be exported into the desktop as a separate file
+Running the Scripts
 
 
-For box plots and bar charts, input in dataset inside code accordingly and run the code. Will output 6 plots for the parameters: total wing area, perimeter, perimeter/area, aspect ratio, circularity and roundness. Error bars represent +- std and bar charts plots average values.
+Update file path in the script:
+db_path = "path/to/your/TA.db"
 
+
+For comparison plots:
+
+Manually input datasets into the script
+
+
+Insert pre-calculated:
+- Mean / standard deviation
+- Mann–Whitney U p-values
+Run the script to generate outputs
+
+
+Output Summary
+Output Type	Description	Location
+- Spatial plots	Cell distribution maps:	Same folder as .db
+- Histograms	Metric distributions:	Same folder as .db
+- CSV tables	Histogram bin data:	Same folder as .db
+- Box plots	Multi-group comparisons:	Desktop
+- Bar charts	Mean ± SD visualisation:	Desktop
+
+
+🧠 Notes
+- Statistical tests are externally computed and manually input into the plotting script
+- Designed for clarity, reproducibility, and publication-quality figures
+- Emphasis on high-resolution output (print-ready figures)
