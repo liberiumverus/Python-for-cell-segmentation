@@ -1,0 +1,156 @@
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+import numpy as np
+import os
+
+# ===================== STYLE =====================
+mpl.rcParams.update({
+    "font.family": "Times New Roman",
+    "axes.unicode_minus": False,
+    "figure.facecolor": "white",
+    "axes.facecolor": "white",
+    "savefig.facecolor": "white",
+})
+
+# ===================== DATA =====================
+groups = ["WT", "DAAM RNAi", "Rac1 RNAi", "Rho1GAP19D RNAi", "Rok RNAi"]
+
+params = [
+    "Total wing area (mm²)",
+    "Perimeter (mm)",
+    "Perimeter/Area",
+    "Aspect Ratio",
+    "Circularity",
+    "Roundness"
+]
+
+data = {
+    "WT": [
+        [],
+        [],
+        [],
+        [],
+        [],
+        []
+    ],
+    "DAAM RNAi": [
+        [],
+        [],
+        [],
+        [],
+        [],
+        []
+    ],
+    "Rac1 RNAi": [
+        [],
+        [],
+        [],
+        [],
+        [],
+        []
+    ],
+    "Rho1GAP19D RNAi": [
+        [],
+        [],
+        [],
+        [],
+        [],
+        []
+    ],
+    "Rok RNAi": [
+        [],
+        [],
+        [],
+        [],
+        [],
+        []
+    ]
+}
+
+# ===================== PRE-CALCULATED MANN-WHITNEY P-VALUES =====================
+pvals_manual = {
+    0: [],
+    1: [],
+    2: [],
+    3: [],
+    4: [],
+    5: []
+}
+
+def stars(p):
+    if p < 0.001:
+        return "***"
+    if p < 0.01:
+        return "**"
+    if p < 0.05:
+        return "*"
+    return "ns"
+
+# ===================== PLOT =====================
+fig, axes = plt.subplots(2, 3, figsize=(14, 9))
+axes = axes.flatten()
+
+x = np.arange(len(groups))
+
+for i, param in enumerate(params):
+    ax = axes[i]
+
+    plot_data = [data[g][i] for g in groups]
+
+    means = [np.mean(v) for v in plot_data]
+    stds = [np.std(v, ddof=1) for v in plot_data]
+
+    # ===================== BAR =====================
+    ax.bar(x, means,
+           yerr=stds,
+           capsize=4,
+           color="white",
+           edgecolor="black",
+           linewidth=1.2,
+           ecolor="black")
+
+    # ===================== POINTS =====================
+    for j, g in enumerate(groups):
+        vals = plot_data[j]
+        jitter = np.random.normal(0, 0.06, len(vals))
+        ax.scatter(np.full(len(vals), j) + jitter,
+                   vals,
+                   color="black",
+                   s=18,
+                   alpha=0.7,
+                   zorder=3)
+
+    ax.set_xticks(x)
+    ax.set_xticklabels(groups, rotation=45)
+    ax.set_title(param)
+
+    # ===================== Y LIMIT =====================
+    all_vals = np.concatenate(plot_data)
+    ymin, ymax = np.min(all_vals), np.max(all_vals)
+    rng = ymax - ymin
+    ax.set_ylim(ymin - 0.3*rng, ymax + 0.9*rng)
+
+    # ===================== SIGNIFICANCE =====================
+    pvals = pvals_manual[i]
+
+    h = ymax + 0.03*rng
+    step = 0.12*rng
+
+    for k, j in enumerate(range(1, len(groups))):
+
+        ax.plot([0, 0, j, j],
+                [h, h+0.02*rng, h+0.02*rng, h],
+                color="black")
+
+        ax.text((0 + j)/2,
+                h + 0.025*rng,
+                stars(pvals[k]),
+                ha="center")
+
+        h += step
+
+plt.tight_layout()
+
+out = os.path.join(os.path.expanduser("~"), "Desktop", "RNAi_bar_FINAL_MANUAL_STATS.png")
+plt.savefig(out, dpi=600, bbox_inches="tight", facecolor="white")
+plt.show()
